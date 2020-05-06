@@ -1,0 +1,53 @@
+# azure-pipelines.yml
+# (c) 2020 Sam Caldwell.  See LICENSE.txt.
+#
+---
+trigger:
+  - master
+  - development
+
+jobs:
+  - job: BuildTestLinux
+    pool:
+      vmImage: 'ubuntu-latest'
+      timeoutInMinutes: 120
+    steps:
+      - checkout: self
+        clean: true
+        path: git
+
+      - task: GoTool@0
+        inputs:
+          version: '1.14.2'
+
+      - script: |
+          set -e
+          ./scripts/dev-setup.sh
+        displayName: Install tools
+        continueOnError: false
+        enabled: true
+
+      - script: |
+          ./scripts/run-linters.sh
+        displayName: Linter
+        continueOnError: false
+        enabled: true
+
+      - script: |
+          ./scripts/run-tests.sh
+        displayName: Go tests
+        continueOnError: false
+        enabled: true
+
+      - script: |
+          ./scripts/run-static-analysis.sh
+        displayName: Static Analysis
+        continueOnError: false
+        enabled: false
+
+      - script: |
+          echo "Branch: $(Build.SourceBranchName)"
+          echo "BuidId: $(Build.BuildId)"
+        displayName: Current State
+        continueOnError: false
+        enabled: true
